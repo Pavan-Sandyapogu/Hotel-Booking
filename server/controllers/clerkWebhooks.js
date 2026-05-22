@@ -9,6 +9,7 @@ const clerkWebhooks = async (req,res)=>{
             "svix-timestamp":req.headers["svix-timestamp"],
             "svix-signature":req.headers["svix-signature"],
         };
+
         await whook.verify(JSON.stringify(req.body),headers)
 
         const {data,type}=req.body
@@ -35,6 +36,8 @@ const clerkWebhooks = async (req,res)=>{
                 await User.findByIdAndDelete(data.id);
                 break;
             }
+            default:
+                break;
 
         }
         res.json({success:true,message:"Webhook Recieved"})
