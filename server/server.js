@@ -16,12 +16,17 @@ connectCloudinary()
 const app=express()
 app.use(cors())
 
+//API to listen to clerk webhooks
+app.post(
+  "/api/clerk",
+  express.raw({ type: "application/json" }),
+  clerkWebhooks
+);
+
+
 //Middle Ware
 app.use(express.json())
 app.use(clerkMiddleware())
-
-//API to listen to clerk webhooks
-app.use("/api/clerk",clerkWebhooks)
 
 app.get('/',(req,res)=> res.send("Api is Working correctly"))
 
@@ -31,5 +36,6 @@ app.use('/api/rooms',roomRouter)
 app.use('/api/bookings',bookingRouter)
 
 const port=process.env.PORT || 3000;
-
+const sk=process.env.CLERK_WEBHOOK_SECRET;
+console.log(sk);
 app.listen(port,()=>console.log(`Server running on port ${port}`)); 
