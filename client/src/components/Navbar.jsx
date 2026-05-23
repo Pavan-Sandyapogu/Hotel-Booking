@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation} from "react-router-dom";
 import { assets } from "../assets/assets";
-import { useClerk, UserButton } from "@clerk/react";
+import { useClerk, UserButton } from "@clerk/clerk-react";
 import { useAppContext } from "../context/AppContext";
 
 const BookIcon=()=>(

@@ -1,4 +1,4 @@
-import { UserButton } from '@clerk/react'
+import { UserButton } from '@clerk/clerk-react'
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { assets } from '../../assets/assets'

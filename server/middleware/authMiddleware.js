@@ -1,26 +1,42 @@
 import User from "../models/User.js";
-
-// Middleware to check if user is authenticated
+import { clerkClient, getAuth } from "@clerk/express";
 
 export const protect = async (req, res, next) => {
     try {
 
-        const  userId  = req.auth?.userId;
+        // CORRECT WAY
+        const { userId } = getAuth(req);
 
         if (!userId) {
-            return res.json({
+            return res.status(401).json({
                 success: false,
-                message: "Not authenticated"
+                message: "Unauthorized"
             });
         }
 
-        const user = await User.findById(userId);
+        let user = await User.findById(userId);
 
+        // AUTO CREATE USER IF NOT EXISTS
         if (!user) {
-            return res.json({
-                success: false,
-                message: "User not found in DB"
+
+            const clerkUser = await clerkClient.users.getUser(userId);
+
+            const email =
+                clerkUser.emailAddresses?.[0]?.emailAddress || "";
+
+            const username =
+                `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim()
+                || email.split("@")[0]
+                || "Guest";
+
+            user = await User.create({
+                _id: clerkUser.id,
+                username,
+                email,
+                image: clerkUser.imageUrl || "",
             });
+
+            console.log("✅ User synced from Clerk");
         }
 
         req.user = user;
@@ -28,7 +44,10 @@ export const protect = async (req, res, next) => {
         next();
 
     } catch (error) {
-        res.json({
+
+        console.log("AUTH ERROR:", error);
+
+        res.status(500).json({
             success: false,
             message: error.message
         });

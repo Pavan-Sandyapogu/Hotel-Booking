@@ -14,10 +14,14 @@ connectDB()
 connectCloudinary()
 
 const app=express()
-app.use(cors())
+app.use(cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+}))
 
 //API to listen to clerk webhooks
-app.post(
+app.use(
   "/api/clerk",
   express.raw({ type: "application/json" }),
   clerkWebhooks
@@ -25,8 +29,9 @@ app.post(
 
 
 //Middle Ware
-app.use(express.json())
 app.use(clerkMiddleware())
+app.use(express.json())
+
 
 app.get('/',(req,res)=> res.send("Api is Working correctly"))
 
@@ -36,6 +41,6 @@ app.use('/api/rooms',roomRouter)
 app.use('/api/bookings',bookingRouter)
 
 const port=process.env.PORT || 3000;
-const sk=process.env.CLERK_WEBHOOK_SECRET;
-console.log(sk);
+//const sk=process.env.CLERK_WEBHOOK_SECRET;
+//console.log(sk);
 app.listen(port,()=>console.log(`Server running on port ${port}`)); 

@@ -1,21 +1,24 @@
 // Function to Check Availability of Room
-
+import Room from "../models/Room.js";
+import Hotel from "../models/Hotel.js";
 import Booking from "../models/Booking.js"
+import { getAuth } from "@clerk/express";
 
 const checkAvailability=async({checkInDate,checkOutDate,room})=>{
     try {
         const bookings=await Booking.find({
             room,
-            checkInDate:{$lte:checkOutDate},
-            checkOutDate:{$gte:checkInDate},
-        })
-        const isAvailable=bookings.length==0;
-        return isAvailable;
+            checkInDate:{$lte:new Date(checkOutDate)},
+            checkOutDate:{$gte:new Date(checkInDate)},
+        });
+
+        return bookings.length === 0;
+
     } catch (error) {
         console.error(error.message);
-        
+        throw error; // Let the calling function handle the failure
     }
-}
+};
 
 
 //API to check availability of room
@@ -25,11 +28,11 @@ export const checkAvailabilityAPI=async(req,res)=>{
     try {
         const{room,checkInDate,checkOutDate}=req.body;
         const isAvailable=await checkAvailability({checkInDate,checkOutDate,room});
-        res.json({success:true,isAvailable})
+        res.status(200).json({ success: true, isAvailable });
     } catch (error) {
-        res.json({success:false,message:error.message})
+        res.status(500).json({ success: false, message: error.message });
     }
-}
+};
 
 //API to create a new booking
 //POST /api/bookings/book
@@ -43,18 +46,22 @@ export const createBooking=async(req,res)=>{
         const isAvailable=await checkAvailability({checkInDate,checkOutDate,room});
 
         if(!isAvailable){
-            return res.json({success:false,message:"Room is not available"})
+            return res.status(400).json({ success: false, message: "Room is not available for these dates" });
         }
 
         const roomData=await Room.findById(room).populate("hotel");
-
-        let totalPrice=roomData.pricePerNight;
+        if (!roomData) {
+            return res.status(404).json({ success: false, message: "Room not found" });
+        }
         const checkIn=new Date(checkInDate)
         const checkOut=new Date(checkOutDate)
+        if (checkIn >= checkOut) {
+            return res.status(400).json({ success: false, message: "Check-out date must be after check-in date" });
+        }
         const timeDiff=checkOut.getTime()-checkIn.getTime();
         const nights=Math.ceil(timeDiff/(1000*3600*24));
-
-        totalPrice*=nights;
+        const totalNights=nights>0?nights:1;
+        const totalPrice=roomData.pricePerNight*totalNights;
         const booking=await Booking.create({
             user,
             room,
@@ -63,43 +70,49 @@ export const createBooking=async(req,res)=>{
             checkInDate,
             checkOutDate,
             totalPrice,
-        })
-        res.json({success:true,message:"Booking created successfully"})
+        });
+        res.status(201).json({ success: true, message: "Booking created successfully" });
     } catch (error) {
-        console.log(error);
-        res.json({success:true,message:"Failed to create booking"})
+        console.error(error);
+        // CRITICAL FIX: Changed success to false and added status 500
+        res.status(500).json({ success: false, message: "Failed to create booking" });
     }
-}
+};
 
 
 //API to get all bookings for a user
 //GET /api/bookings/user
 
-export const getUserBookings=async(req,res)=>{
+export const getUserBookings = async (req, res) => {
     try {
-        const user=req.user._id;
-        const bookings=await Booking.find({user}).populate("room hotel").sort({createdAt:-1})
-        res.json({success:true,bookings})
+        const user = req.user._id;
+        const bookings = await Booking.find({ user }).populate("room hotel").sort({ createdAt: -1 });
+        
+        res.status(200).json({ success: true, bookings });
     } catch (error) {
-        res.json({success:false,message:"Failed to fetch bookings"})
+        res.status(500).json({ success: false, message: "Failed to fetch bookings" });
     }
-}
+};
 
-export const getHotelBookings=async(req,res)=>{
+// API to get all bookings for a hotel owner
+export const getHotelBookings = async (req, res) => {
     try {
-            const hotel=await Hotel.findOne({owner:req.auth.userId});
-        if(!hotel){
-            return res.json({success:false,message:"No Hotel found"});
+        const {userId}=getAuth(req);
+        const hotel = await Hotel.findOne({ owner: userId });
+        if (!hotel) {
+            return res.status(404).json({ success: false, message: "No Hotel found for this user" });
         }
-        const bookings=await Booking.find({hotel:hotel._id}).populate("room hotel user").sort({createdAt:-1})
+        
+        const bookings = await Booking.find({ hotel: hotel._id }).populate("room hotel user").sort({ createdAt: -1 });
 
-        //Total Bookings
-        const totalBookings=bookings.length;
-        //Total Revenue
-        const totalRevenue= bookings.reduce((acc,booking)=>acc+booking.totalPrice,0)
+        // Total Bookings
+        const totalBookings = bookings.length;
+        
+        // Total Revenue
+        const totalRevenue = bookings.reduce((acc, booking) => acc + booking.totalPrice, 0);
 
-        res.json({success:true,dashboardData:{totalBookings,totalRevenue,bookings}})
+        res.status(200).json({ success: true, dashboardData: { totalBookings, totalRevenue, bookings } });
     } catch (error) {
-        res.json({success:false,message:"Failed to fetch bookings"})
+        res.status(500).json({ success: false, message: "Failed to fetch bookings" });
     }
-}
+};
