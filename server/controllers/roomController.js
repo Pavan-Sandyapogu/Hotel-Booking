@@ -47,13 +47,15 @@ export const getRooms = async (req, res) => {
                 select: "image" // FIXED: Added quotes around "image"
             }
         }).sort({ createdAt: -1 });
-
+        /*const rooms = await Room.find({
+            isAvailable: true
+        }).populate("hotel");*/
         res.status(200).json({ success: true, rooms });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
-/*
+
 // API to get a single room by ID
 export const getRoomById = async (req, res) => {
     try {
@@ -72,7 +74,7 @@ export const getRoomById = async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
-};*/
+};
 
 // API to get all rooms for a specific hotel owner
 export const getOwnerRooms = async (req, res) => {
