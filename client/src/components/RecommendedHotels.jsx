@@ -8,8 +8,8 @@ import { useEffect } from 'react'
 const RecommendedHotels = () => {
     const { rooms,searchedCities} = useAppContext()
     const [recommended,setRecommended]=useState([]);
-    console.log(rooms);
-    console.log(searchedCities);
+    //console.log(rooms);
+    //console.log(searchedCities);
     const filterHotels= ()=>{
         const filteredHotels = rooms.slice().filter(room => searchedCities.includes(room.hotel.city));
         setRecommended(filteredHotels);
