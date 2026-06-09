@@ -21,6 +21,13 @@ const bookingSchema = new mongoose.Schema({
     status: { type: String, enum: ["pending", "confirmed", "cancelled"], default: "pending" },
     paymentMethod: { type: String, required: true, default: "Pay At Hotel" },
     isPaid: { type: Boolean, default: false },
+    paymentStatus: {
+    type: String,
+    enum: ["success", "failed"]
+    },
+    paymentId: {type:String},
+    orderId: {type:String},
+    failureReason:{type:String},
 
 }, { timestamps: true });
 

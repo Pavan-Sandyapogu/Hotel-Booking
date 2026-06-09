@@ -137,24 +137,125 @@ const RoomDetails = () => {
             if(!isAvailable){
                 return checkAvailability();
             }
-            else{
-                const token = await getToken()
-                const { data } = await axios.post('/api/bookings/book', {
-                    room: id,
-                    checkInDate,
-                    checkOutDate,
-                    guests,
-                    paymentMethod: "Pay At Hotel"
-                }, { headers: { Authorization: `Bearer ${token}` } }) 
-                if(data.success){
-                    toast.success(data.message)
-                    navigate('/my-bookings')
-                    scrollTo(0,0)
-                }
-                else{
-                    toast.error(data.message)
-                }
+            else {
+
+    const token = await getToken();
+
+    const { data } = await axios.post(
+        "/api/payment/create-order",
+        {
+            room: id,
+            checkInDate,
+            checkOutDate,
+            guests
+        },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`
             }
+        }
+    );
+
+    if (!data.success) {
+        return toast.error(data.message);
+    }
+
+    const options = {
+
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+
+        amount: data.order.amount,
+
+        currency: data.order.currency,
+
+        name: "Hotel Booking",
+
+        description: "Room Reservation",
+
+        order_id: data.order.id,
+
+        handler: async function (response) {
+            console.log("VERIFY TOKEN:", token);
+            console.log("RAZORPAY RESPONSE:", response);
+            try {
+
+                const verify = await axios.post(
+                    "/api/payment/verify-payment",
+                    {
+                        ...response,
+                        room: id,
+                        checkInDate,
+                        checkOutDate,
+                        guests
+                    },
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    }
+                );
+
+                if (verify.data.success) {
+
+                    toast.success("Booking Confirmed");
+
+                    navigate("/my-bookings");
+
+                    scrollTo(0, 0);
+                }
+
+            } catch (error) {
+
+                toast.error(
+                    error.response?.data?.message ||
+                    error.message
+                );
+            }
+        }
+    };
+
+    const rzp = new window.Razorpay(options);
+
+    rzp.on(
+        "payment.failed",
+        async function (response) {
+
+            try {
+
+                await axios.post(
+                    "/api/payment/failed",
+                    {
+                        room: id,
+                        checkInDate,
+                        checkOutDate,
+                        guests,
+
+                        failureReason:
+                            response.error.description
+                    },
+                    {
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`
+                        }
+                    }
+                );
+
+                toast.error("Payment Failed");
+
+                navigate("/my-bookings");
+
+                scrollTo(0, 0);
+
+            } catch (error) {
+
+                console.log(error);
+            }
+        }
+    );
+
+    rzp.open();
+}
         } catch (error) {
             toast.error(error.message)
         }
@@ -215,7 +316,7 @@ const RoomDetails = () => {
                     </div>
                 </div>
                 {/* Room Price */}
-                <p className='text-2xl font-medium'>${room.pricePerNight}/night</p>
+                <p className='text-2xl font-medium'>₹{room.pricePerNight}/night</p>
             </div>
             {/* CheckIn CheckOut Form */}
             <form

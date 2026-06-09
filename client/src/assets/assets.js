@@ -1,4 +1,5 @@
 import logo from './logo.svg'
+import newLogo from './newLogo.png';
 import searchIcon from './searchIcon.svg'
 import userIcon from './userIcon.svg'
 import calenderIcon from './calenderIcon.svg'
@@ -41,6 +42,7 @@ import totalRevenueIcon from "./totalRevenueIcon.svg";
 
 export const assets = {
     logo,
+    newLogo,
     searchIcon,
     userIcon,
     calenderIcon,
@@ -75,10 +77,10 @@ export const assets = {
 }
 
 export const cities = [
-    "Dubai",
-    "Singapore",
-    "New York",
-    "London",
+    "Hyderabad",
+    "Banglore",
+    "Mumbai",
+    "Kurnool",
 ];
 
 // Exclusive Offers Dummy Data

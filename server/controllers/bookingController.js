@@ -9,6 +9,7 @@ const checkAvailability=async({checkInDate,checkOutDate,room})=>{
     try {
         const bookings=await Booking.find({
             room,
+            status: "confirmed",
             checkInDate:{$lte:new Date(checkOutDate)},
             checkOutDate:{$gte:new Date(checkInDate)},
         });
@@ -85,7 +86,8 @@ export const createBooking=async(req,res)=>{
                     <li><strong>Hotel Name: </strong>${roomData.hotel.name}</li>
                     <li><strong>Location: </strong>${roomData.hotel.address}</li>
                     <li><strong>Date: </strong>${booking.checkInDate.toDateString()}</li>
-                    <li><strong>Booking Amount: </strong>${process.env.CURRENCY || '$'} ${booking.totalPrice}/night</li>
+                    <li><strong>Room Price: </strong>${process.env.CURRENCY || '$'} ${roomData.pricePerNight}/night</li>
+                    <li><strong>Booking Amount: </strong>${process.env.CURRENCY || '$'} ${booking.totalPrice}</li>
                 </ul>
                 <p>We look forward to welcoming you!</p>
                 <p>If you need to make any changes, feel free to contact us.</p>

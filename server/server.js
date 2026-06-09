@@ -9,6 +9,7 @@ import hotelRouter from "./routes/hotelRoutes.js";
 import connectCloudinary from "./configs/cloudinary.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
+import paymentRouter from "./routes/paymentRoutes.js";
 
 connectDB()
 connectCloudinary()
@@ -39,6 +40,7 @@ app.use('/api/user',userRouter)
 app.use('/api/hotels',hotelRouter)
 app.use('/api/rooms',roomRouter)
 app.use('/api/bookings',bookingRouter)
+app.use('/api/payment', paymentRouter);
 
 const port=process.env.PORT || 3000;
 //const sk=process.env.CLERK_WEBHOOK_SECRET;
