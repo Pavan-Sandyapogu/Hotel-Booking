@@ -88,7 +88,7 @@ const ListRoom = () => {
                                         {item.amenities.join(', ')}
                                     </td>
                                     <td className='py-3 px-4 text-gray-700 border-t border-gray-300'>
-                                        ${item.pricePerNight}
+                                        ₹{item.pricePerNight}
                                     </td>
                                     <td className='py-3 px-4 border-t border-gray-300 text-sm text-red-500 text-center'>
                                         <label className='relative inline-flex items-center cursor-pointer text-gray-900 gap-3'>

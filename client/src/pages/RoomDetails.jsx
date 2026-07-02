@@ -15,95 +15,11 @@ const RoomDetails = () => {
     const [checkOutDate, setCheckOutDate] = useState(null)
     const [guests, setGuests] = useState(1)
     const [isAvailable, setIsAvailable] = useState(null)
-    //const [loading, setLoading] = useState(false)
-    //const [bookingLoading, setBookingLoading] = useState(false)
-
-    /*useEffect(() => {
-        const fetchRoom = async () => {
-            try {
-                const { data } = await axios.get(`/api/rooms/${id}`)
-                if (data.success) {
-                    setRoom(data.room)
-                    setMainImage(data.room.images[0])
-                } else {
-                    toast.error('Room not found')
-                }
-            } catch (error) {
-                toast.error(error.response?.data?.message || error.message)
-            }
-        }
-        fetchRoom()
-    }, [id])
-
-    const checkAvailability = async (e) => {
-        e.preventDefault()
-        if (!checkInDate || !checkOutDate || guests < 1) {
-            toast.error('Please fill in all booking details')
-            return
-        }
-        if (new Date(checkInDate) >= new Date(checkOutDate)) {
-            toast.error('Check-out date must be after check-in date')
-            return
-        }
-        setLoading(true)
-        try {
-            const { data } = await axios.post('/api/bookings/check-availability', {
-                room: id,
-                checkInDate,
-                checkOutDate,
-            })
-            if (data.success) {
-                setIsAvailable(data.isAvailable)
-                if (data.isAvailable) {
-                    toast.success('Room is available! Click "Book Now" to confirm.')
-                } else {
-                    toast.error('Room is not available for these dates.')
-                }
-            }
-        } catch (error) {
-            toast.error(error.response?.data?.message || error.message)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const handleBook = async () => {
-        if (!user) {
-            toast.error('Please login to make a booking')
-            return
-        }
-        if (!isAvailable) {
-            toast.error('Please check availability first')
-            return
-        }
-        setBookingLoading(true)
-        try {
-            const token = await getToken()
-            const { data } = await axios.post('/api/bookings/book', {
-                room: id,
-                checkInDate,
-                checkOutDate,
-                guests,
-            }, { headers: { Authorization: `Bearer ${token}` } })
-
-            if (data.success) {
-                toast.success('Booking confirmed!')
-                navigate('/my-bookings')
-                scrollTo(0, 0)
-            } else {
-                toast.error(data.message)
-            }
-        } catch (error) {
-            toast.error(error.response?.data?.message || error.message)
-        } finally {
-            setBookingLoading(false)
-        }
-    } */
-   // Check if the Room is Available
-   const checkAvailability= async ()=>{
+    // Check if the Room is Available
+    const checkAvailability = async () => {
         try {
             //Check is Check-in Date is greater than check-out Date
-            if(checkInDate>=checkOutDate){
+            if (checkInDate >= checkOutDate) {
                 toast.error('Check-In Date should be less than Check-out Date')
                 return;
             }
@@ -111,78 +27,39 @@ const RoomDetails = () => {
                 room: id,
                 checkInDate,
                 checkOutDate,
-            }) 
-            if(data.success){
-                if(data.isAvailable){
+            })
+            if (data.success) {
+                if (data.isAvailable) {
                     setIsAvailable(true)
                     toast.success('Room is Available')
                 }
-                else{
+                else {
                     setIsAvailable(false)
                     toast.error('Room is Not Available')
                 }
             }
-            else{
+            else {
                 toast.error(data.message)
             }
         } catch (error) {
             toast.error(error.message)
         }
-   }
+    }
 
-   // onSubmitHandler function to check availability & book the room
-   const onSubmitHandler= async(e)=>{
+    // onSubmitHandler function to check availability & book the room
+    const onSubmitHandler = async (e) => {
         try {
             e.preventDefault();
-            if(!isAvailable){
+            if (!isAvailable) {
                 return checkAvailability();
             }
             else {
 
-    const token = await getToken();
+                const token = await getToken();
 
-    const { data } = await axios.post(
-        "/api/payment/create-order",
-        {
-            room: id,
-            checkInDate,
-            checkOutDate,
-            guests
-        },
-        {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
-    );
-
-    if (!data.success) {
-        return toast.error(data.message);
-    }
-
-    const options = {
-
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-
-        amount: data.order.amount,
-
-        currency: data.order.currency,
-
-        name: "Hotel Booking",
-
-        description: "Room Reservation",
-
-        order_id: data.order.id,
-
-        handler: async function (response) {
-            console.log("VERIFY TOKEN:", token);
-            console.log("RAZORPAY RESPONSE:", response);
-            try {
-
-                const verify = await axios.post(
-                    "/api/payment/verify-payment",
+                const { data } = await axios.post(
+                    "/api/payment/create-order",
                     {
-                        ...response,
                         room: id,
                         checkInDate,
                         checkOutDate,
@@ -195,78 +72,117 @@ const RoomDetails = () => {
                     }
                 );
 
-                if (verify.data.success) {
-
-                    toast.success("Booking Confirmed");
-
-                    navigate("/my-bookings");
-
-                    scrollTo(0, 0);
+                if (!data.success) {
+                    return toast.error(data.message);
                 }
 
-            } catch (error) {
+                const options = {
 
-                toast.error(
-                    error.response?.data?.message ||
-                    error.message
-                );
-            }
-        }
-    };
+                    key: import.meta.env.VITE_RAZORPAY_KEY_ID,
 
-    const rzp = new window.Razorpay(options);
+                    amount: data.order.amount,
 
-    rzp.on(
-        "payment.failed",
-        async function (response) {
+                    currency: data.order.currency,
 
-            try {
+                    name: "Hotel Booking",
 
-                await axios.post(
-                    "/api/payment/failed",
-                    {
-                        room: id,
-                        checkInDate,
-                        checkOutDate,
-                        guests,
+                    description: "Room Reservation",
 
-                        failureReason:
-                            response.error.description
-                    },
-                    {
-                        headers: {
-                            Authorization:
-                                `Bearer ${token}`
+                    order_id: data.order.id,
+
+                    handler: async function (response) {
+                        console.log("VERIFY TOKEN:", token);
+                        console.log("RAZORPAY RESPONSE:", response);
+                        try {
+
+                            const verify = await axios.post(
+                                "/api/payment/verify-payment",
+                                {
+                                    ...response,
+                                    room: id,
+                                    checkInDate,
+                                    checkOutDate,
+                                    guests
+                                },
+                                {
+                                    headers: {
+                                        Authorization: `Bearer ${token}`
+                                    }
+                                }
+                            );
+
+                            if (verify.data.success) {
+
+                                toast.success("Booking Confirmed");
+
+                                navigate("/my-bookings");
+
+                                scrollTo(0, 0);
+                            }
+
+                        } catch (error) {
+
+                            toast.error(
+                                error.response?.data?.message ||
+                                error.message
+                            );
+                        }
+                    }
+                };
+
+                const rzp = new window.Razorpay(options);
+
+                rzp.on(
+                    "payment.failed",
+                    async function (response) {
+
+                        try {
+
+                            await axios.post(
+                                "/api/payment/failed",
+                                {
+                                    room: id,
+                                    checkInDate,
+                                    checkOutDate,
+                                    guests,
+
+                                    failureReason:
+                                        response.error.description
+                                },
+                                {
+                                    headers: {
+                                        Authorization:
+                                            `Bearer ${token}`
+                                    }
+                                }
+                            );
+
+                            toast.error("Payment Failed");
+
+                            navigate("/my-bookings");
+
+                            scrollTo(0, 0);
+
+                        } catch (error) {
+
+                            console.log(error);
                         }
                     }
                 );
 
-                toast.error("Payment Failed");
-
-                navigate("/my-bookings");
-
-                scrollTo(0, 0);
-
-            } catch (error) {
-
-                console.log(error);
+                rzp.open();
             }
-        }
-    );
-
-    rzp.open();
-}
         } catch (error) {
             toast.error(error.message)
         }
-   }
-   useEffect(()=>{
-        const room=rooms.find(room => room._id===id)
+    }
+    useEffect(() => {
+        const room = rooms.find(room => room._id === id)
         room && setRoom(room)
         room && setMainImage(room.images[0]);
-   },[rooms])
+    }, [rooms])
 
-    return room && ( 
+    return room && (
         <div className='py-28 md:py-35 px-4 md:px-16 lg:px-24 xl:px-32'>
             {/* Room Details */}
             <div className='flex flex-col md:flex-row items-start md:items-center gap-2'>
@@ -288,7 +204,7 @@ const RoomDetails = () => {
             {/* Room Images */}
             <div className='flex flex-col lg:flex-row mt-6 gap-6'>
                 <div className='lg:w-1/2 w-full'>
-                    <img src={mainImage} alt="mainImage" className='w-full rounded-xl shadow-lg object-cover'/>
+                    <img src={mainImage} alt="mainImage" className='w-full aspect-[4/3] rounded-xl shadow-lg object-cover' />
                 </div>
                 <div className='grid grid-cols-2 gap-4 lg:w-1/2 w-full'>
                     {room?.images.length > 1 && room.images.map((image, index) => (
@@ -297,7 +213,7 @@ const RoomDetails = () => {
                             key={index}
                             src={image}
                             alt="image"
-                            className={`w-full rounded-xl shadow-md object-cover cursor-pointer ${mainImage === image && 'outline-3 outline-orange-500'}`}
+                            className={`w-full aspect-[4/3] rounded-xl shadow-md object-cover cursor-pointer ${mainImage === image && 'outline-3 outline-orange-500'}`}
                         />
                     ))}
                 </div>
@@ -309,7 +225,7 @@ const RoomDetails = () => {
                     <div className='flex flex-wrap items-center mt-3 mb-6 gap-4'>
                         {room.amenities.map((item, index) => (
                             <div key={index} className='flex items-center gap-2 px-3 py-3 rounded-lg bg-gray-100'>
-                                {facilityIcons[item] && <img src={facilityIcons[item]} alt="item" className='w-5 h-5'/>}
+                                {facilityIcons[item] && <img src={facilityIcons[item]} alt="item" className='w-5 h-5' />}
                                 <p className='text-xs'>{item}</p>
                             </div>
                         ))}
@@ -327,7 +243,7 @@ const RoomDetails = () => {
                     <div className='flex flex-col'>
                         <label htmlFor="checkInDate" className='font-medium'>Check-In</label>
                         <input
-                            onChange={e =>setCheckInDate(e.target.value)}
+                            onChange={e => setCheckInDate(e.target.value)}
                             min={new Date().toISOString().split('T')[0]}
                             type="date"
                             id='checkInDate'
@@ -340,7 +256,7 @@ const RoomDetails = () => {
                     <div className='flex flex-col'>
                         <label htmlFor="checkOutDate" className='font-medium'>Check-Out</label>
                         <input
-                            onChange={(e) =>setCheckOutDate(e.target.value)}
+                            onChange={(e) => setCheckOutDate(e.target.value)}
                             min={checkInDate} disabled={!checkInDate}
                             type="date"
                             id='checkOutDate'
@@ -365,8 +281,8 @@ const RoomDetails = () => {
                     </div>
                 </div>
                 <button type='submit'
-                        className='bg-primary hover:bg-primary-dull active:scale-95 transition-all text-white rounded-md max-md:w-full max-md:mt-6 md:px-25 py-3 md:py-4 text-base cursor-pointer'>
-                {isAvailable ? "Book Now" : "Check Availability"}
+                    className='bg-primary hover:bg-primary-dull active:scale-95 transition-all text-white rounded-md max-md:w-full max-md:mt-6 md:px-25 py-3 md:py-4 text-base cursor-pointer'>
+                    {isAvailable ? "Book Now" : "Check Availability"}
                 </button>
             </form>
             {/* Common Specifications */}

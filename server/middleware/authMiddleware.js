@@ -5,11 +5,11 @@ export const protect = async (req, res, next) => {
     try {
 
         // CORRECT WAY
-        console.log("AUTH HEADER:", req.headers.authorization);
-        const auth=getAuth(req);
-        console.log(auth);
+        //console.log("AUTH HEADER:", req.headers.authorization);
+        const auth = getAuth(req);
+        //console.log(auth);
         const { userId } = auth;
-        console.log(userId);
+        //console.log(userId);
         if (!userId) {
             return res.status(401).json({
                 success: false,

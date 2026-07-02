@@ -154,21 +154,24 @@ export const verifyPayment = async (req, res) => {
         await transporter.sendMail({
             from: process.env.SMTP_USER,
             to: req.user.email,
-            subject: "Hotel Booking Confirmed",
+            subject: `Booking Confirmation on BookMyHotel, Hotel Name: ${roomData.hotel.name}`,
 
             html: `
                 <h2>Booking Confirmed</h2>
-
                 <p>Hello ${req.user.username}</p>
-
                 <p>Your payment was successful.</p>
+                <p>Thank you for your booking! Here are your details: </p>
 
                 <ul>
-                    <li>Booking ID : ${booking._id}</li>
-                    <li>Hotel : ${roomData.hotel.name}</li>
-                    <li>Amount : ₹${booking.totalPrice}</li>
-                    <li>Check In : ${booking.checkInDate.toDateString()}</li>
+                    <li><strong>Booking ID: </strong>${booking._id}</li>
+                    <li><strong>Hotel Name: </strong>${roomData.hotel.name}</li>
+                    <li><strong>Location: </strong>${roomData.hotel.address}</li>
+                    <li><strong>Date: </strong>${booking.checkInDate.toDateString()}</li>
+                    <li><strong>Room Price: </strong>₹${roomData.pricePerNight}/night</li>
+                    <li><strong>Booking Amount: </strong>₹${booking.totalPrice}</li>
                 </ul>
+                <p>We look forward to welcoming you!</p>
+                <p>If you need to make any changes, feel free to contact us.</p>               
             `
         });
 
